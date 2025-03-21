@@ -1,5 +1,7 @@
-// Создаем класс для подзадач, наследуем от Task
-public class Subtask extends Task{
+package model;
+
+// Создаем класс для подзадач, наследуем от model.Task
+public class Subtask extends Task {
     private int epicId; // Индентификатор для эпика, к которому принадлежит задача
 
     // Конструктор для создания подзадачи
@@ -16,7 +18,7 @@ public class Subtask extends Task{
     // Переопределяем метод toString для удобного вывода информации о подзадаче
     @Override
     public String toString() {
-        return "Task{" +
+        return "model.Task{" +
                 "id=" + getId() +
                 ", name='" + getName() + '\'' +
                 ", description='" + getDescription() + '\'' +

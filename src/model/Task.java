@@ -1,3 +1,7 @@
+package model;
+
+import java.util.Objects;
+
 // Создаем базовый класс для задач
 public class Task {
     private int id; // Уникальный идентификатор задачи
@@ -46,11 +50,26 @@ public class Task {
     // Переопределяем метод toString для удобного вывода информации о задаче
     @Override
     public String toString() {
-        return "Task{" +
+        return "model.Task{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", status=" + status +
                 '}';
+    }
+
+    // Переопределяем equals
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Task task = (Task) o;
+        return id == task.id;
+    }
+
+    // Переопределяем hashCode
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

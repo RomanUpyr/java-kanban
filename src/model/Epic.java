@@ -1,8 +1,10 @@
+package model;
+
 import java.util.ArrayList;
 import java.util.List;
 
-// Класса для эпиков, наследуем от Task
-public class Epic extends Task{
+// Класса для эпиков, наследуем от model.Task
+public class Epic extends Task {
     private List<Integer> subtaskIds; // Список ids для подзадач входящих в эпик
 
     // Конструктор для создания эпика
@@ -29,7 +31,7 @@ public class Epic extends Task{
     // Переопределяем метод toString для удобного вывода информации об эпике
     @Override
     public String toString() {
-        return "Epic{" +
+        return "model.Epic{" +
                 "id=" + getId() +
                 ", name='" + getName() + '\'' +
                 ", description='" + getDescription() + '\'' +
