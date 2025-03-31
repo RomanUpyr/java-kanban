@@ -7,7 +7,6 @@ import model.Task;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 // Класс для управления задачами
@@ -74,17 +73,6 @@ public class InMemoryTaskManager implements TaskManager {
         subtasks.clear(); // Удаление всех подзадач, так как они связаны с эпиками
     }
 
-    /* Метод для добавления задачи в историю просмотров.
-       Если история превышает 10 элементов, удаляем самый старый.
-
-    private void addToHistory(Task task) {
-        history.addLast(task);
-        if (history.size() > 10) {
-            history.removeFirst();
-        }
-    }
-    */
-
     /* Обновляем методы получения задач, чтобы они добавлялись в историю
        Получение задачи по идентификатору
      */
@@ -127,6 +115,16 @@ public class InMemoryTaskManager implements TaskManager {
     // Создание подзадачи
     @Override
     public void createSubtask(Subtask subtask) {
+        if (subtask == null) {
+            throw new IllegalArgumentException("Подзадача не может быть null");
+        }
+        if (subtask.getId() == subtask.getEpicId()) {
+            throw new IllegalArgumentException("Подзадача не может ссылаться на саму себя как на эпик");
+        }
+        if (!epics.containsKey(subtask.getEpicId())) {
+            throw new IllegalArgumentException("Эпик с id=" + subtask.getEpicId() + " не существует");
+        }
+
         subtask.setId(generateIds()); // Устанавливаем уникальный идентификатор
         subtasks.put(subtask.getId(), subtask); // Добавляем подзадачу в хранилище
         Epic epic = epics.get(subtask.getEpicId()); // Получаем эпик к которому относится подзадача
