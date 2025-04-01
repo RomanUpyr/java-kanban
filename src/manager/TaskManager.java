@@ -5,17 +5,18 @@ import model.Subtask;
 import model.Task;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public interface TaskManager {
     // Геттер для получения списка всех задач
-    ArrayList<Task> getAllTasks();
+    Collection<Task> getAllTasks();
 
     // Геттер для получения списка всех подзадач
-    ArrayList<Subtask> getAllSubtasks();
+    Collection<Task> getAllSubtasks();
 
     // Геттер для получения списка всех эпиков
-    ArrayList<Epic> getAllEpics();
+    Collection<Task> getAllEpics();
 
     // Метод для удаления всех задач
     void deleteAllTasks();
