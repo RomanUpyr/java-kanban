@@ -23,7 +23,7 @@ public class InMemoryHistoryManager implements HistoryManager {
         if (oldTail == null) {
             head = newNode;
         } else {
-            oldTail.next = newNode;
+            oldTail.setNext(newNode);
         }
     }
 
@@ -31,17 +31,15 @@ public class InMemoryHistoryManager implements HistoryManager {
      * Удаляет узел из двусвязного списка
      */
     private void removeNode(Node node) {
-        // Обновляем ссылки соседних узлов
-        if (node.prev != null) {
-            node.prev.next = node.next;
+        if (node.getPrev() != null) {
+            node.getPrev().setNext(node.getNext());
         } else {
-            head = node.next; // Удаляемый узел был головой
+            head = node.getNext(); // Удаляемый узел был головой
         }
-
-        if (node.next != null) {
-            node.next.prev = node.prev;
+        if (node.getNext() != null) {
+            node.getNext().setPrev(node.getPrev());
         } else {
-            tail = node.prev; // Удаляемый узел был хвостом
+            tail = node.getPrev(); // Удаляемый узел был хвостом
         }
     }
 
@@ -52,15 +50,17 @@ public class InMemoryHistoryManager implements HistoryManager {
         List<Task> tasks = new ArrayList<>();
         Node current = head;
         while (current != null) {
-            tasks.add(current.task);
-            current = current.next;
+            tasks.add(current.getTask());
+            current = current.getNext();
         }
         return tasks;
     }
 
     @Override
     public void add(Task task) {
-        if (task == null) return;
+        if (task == null) {
+            return;
+        }
 
         // Удаляем задачу, если она уже есть в истории
         remove(task.getId());

@@ -6,9 +6,9 @@ import model.Task;
  Узел двусвязного списка, хранящий задачу (Task) и ссылки на предыдущий и следующий узлы.
   */
 public class Node {
-    Task task;      // Сама задача, которая хранится в узле
-    Node prev;      // Ссылка на предыдущий узел в списке
-    Node next;      // Ссылка на следующий узел в списке
+    private Task task;      // Сама задача, которая хранится в узле
+    private Node prev;      // Ссылка на предыдущий узел в списке
+    private Node next;      // Ссылка на следующий узел в списке
 
     /**
      * Конструктор узла.
@@ -18,4 +18,26 @@ public class Node {
         this.prev = prev;
         this.next = next;
     }
+
+    public Task getTask() {
+        return task;
+    }
+
+    public Node getPrev() {
+        return prev;
+    }
+
+    public void setPrev(Node prev) {
+        this.prev = prev;
+    }
+
+    public Node getNext() {
+        return next;
+    }
+
+    public void setNext(Node next) {
+        this.next = next;
+    }
+
+
 }
