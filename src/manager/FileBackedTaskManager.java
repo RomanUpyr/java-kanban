@@ -97,6 +97,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             throw new ManagerSaveException("Ошибка сохранения в файл", e);
         }
     }
+
     private static String historyToString(HistoryManager manager) {
         List<Task> history = manager.getHistory();
         return history.stream()
