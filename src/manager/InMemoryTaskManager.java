@@ -13,7 +13,7 @@ public class InMemoryTaskManager implements TaskManager {
     protected final Map<Integer, Subtask> subtasks = new HashMap<>(); // Для хранения подзадач
     protected final Map<Integer, Epic> epics = new HashMap<>(); // Для хранения эпиков
     protected int nextId = 1; // Счетчик для генерации идентификаторов
-    private final HistoryManager historyManager = Managers.getDefaultHistory(); // Менеджер истории, получаем через Manager
+    protected final HistoryManager historyManager = Managers.getDefaultHistory(); // Менеджер истории, получаем через Manager
 
     // Метод для генерации нового уникального идентификатора
     private int generateIds() {

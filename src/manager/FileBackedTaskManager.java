@@ -9,7 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -44,31 +47,6 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         return manager;
     }
 
-    private void load() {
-        try {
-            // Читаем все содержимое файла
-            String content = Files.readString(file.toPath());
-            // Если файл пуст, возвращаем пустой менеджер
-            if (content.isEmpty()) {
-                return;
-            }
-
-            // Разбиваем содержимое на строки (первая строка - заголовок)
-            String[] lines = content.split("\n");
-
-            // Обрабатываем каждую строку с задачами (пропускаем заголовок в индексе 0)
-            for (int i = 1; i < lines.length; i++) {
-                Task task = fromString(lines[i]);
-                if (task != null) {
-                    addRestoredTask(task); // Восстанавливаем задачу
-                }
-            }
-
-        } catch (IOException e) {
-            throw new ManagerSaveException("Ошибка чтения файла", e);
-        }
-    }
-
     /* Добавляем восстановленные задачи в соответствующие коллекции
      * @param task задача для восстановления
      */
@@ -101,32 +79,80 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
      * @throws ManagerSaveException при ошибках записи в файл
      */
     protected void save() {
-        List<String> lines = new ArrayList<>();
-        // Добавляем заголовок CSV
-        lines.add("id,type,name,status,description,epic");
-
-        //Добавляем обычные задачи
-        for (Task task : tasks.values()) {
-            lines.add(toString(task));
-        }
-
-        // Добавляем все эпики
-        for (Epic epic : epics.values()) {
-            lines.add(toString(epic));
-        }
-
-        // Добавляем все подзадачи
-        for (Subtask subtask : subtasks.values()) {
-            lines.add(toString(subtask));
-        }
-
         try {
-            //Записываем все строки в файл
-            Files.writeString(file.toPath(), String.join("\n", lines));
+            List<String> lines = new ArrayList<>();
+            lines.add("id,type,name,status,description,epic");
+
+            // Сохраняем задачи
+            tasks.values().forEach(task -> lines.add(toString(task)));
+            epics.values().forEach(epic -> lines.add(toString(epic)));
+            subtasks.values().forEach(subtask -> lines.add(toString(subtask)));
+
+            // Сохраняем историю
+            lines.add(""); // Пустая строка как разделитель
+            lines.add(historyToString(historyManager));
+
+            Files.write(file.toPath(), lines);
         } catch (IOException e) {
             throw new ManagerSaveException("Ошибка сохранения в файл", e);
         }
     }
+    private static String historyToString(HistoryManager manager) {
+        List<Task> history = manager.getHistory();
+        return history.stream()
+                .map(Task::getId)
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+    }
+
+    private static List<Integer> historyFromString(String value) {
+        if (value == null || value.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(value.split(","))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+    }
+
+    private void load() {
+        try {
+            String content = Files.readString(file.toPath());
+            if (content.isEmpty()) {
+                return;
+            }
+
+            String[] parts = content.split("\n\n", 2); // Разделяем задачи и историю
+            String[] taskLines = parts[0].split("\n");
+
+            // Пропускаем заголовок
+            for (int i = 1; i < taskLines.length; i++) {
+                Task task = fromString(taskLines[i]);
+                if (task != null) {
+                    addRestoredTask(task);
+                }
+            }
+
+            // Восстанавливаем историю, если она есть
+            if (parts.length > 1 && !parts[1].isEmpty()) {
+                List<Integer> historyIds = historyFromString(parts[1]);
+                for (int id : historyIds) {
+                    Task task = getTaskById(id);
+                    if (task == null) {
+                        task = getSubtaskById(id);
+                    }
+                    if (task == null) {
+                        task = getEpicById(id);
+                    }
+                    if (task != null) {
+                        historyManager.add(task);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new ManagerSaveException("Ошибка чтения из файла", e);
+        }
+    }
+
 
     /**
      * Метод преобразует объект Task в строку CSV.
