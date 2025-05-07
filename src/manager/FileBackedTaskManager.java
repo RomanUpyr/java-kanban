@@ -12,16 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 /**
  * FileBackedTaskManager расширяет InMemoryTaskManager, добавляя функциональность сохранения в файл.
  * Автоматически сохраняет состояние задач в указанный файл после каждого изменения.
  */
 
-public class FileBackedTaskManager extends InMemoryTaskManager{
+public class FileBackedTaskManager extends InMemoryTaskManager {
     private final File file;  // Файл для хранения задач
+
     /**
      * Конструктор создает новый FileBackedTaskManager, использующий указанный файл для хранения.
+     *
      * @param file Передаем файл для сохранения данных задач
      */
     public FileBackedTaskManager(File file) {
@@ -31,6 +32,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
     /**
      * Статический метод для создания FileBackedTaskManager из сохраненного файла при запуске программы.
      * Восстанавливает состояние менеджера из указанного файла.
+     *
      * @param file Файл с сохраненными данными задач
      * @return Новый FileBackedTaskManager с восстановленным состоянием
      * @throws ManagerSaveException при ошибках чтения файла
@@ -41,6 +43,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
         manager.load();
         return manager;
     }
+
     private void load() {
         try {
             // Читаем все содержимое файла
@@ -62,7 +65,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
             }
 
         } catch (IOException e) {
-            throw new ManagerSaveException ("Ошибка чтения файла", e);
+            throw new ManagerSaveException("Ошибка чтения файла", e);
         }
     }
 
@@ -74,26 +77,27 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
         if (task instanceof Epic) {
             //Epic epic = (Epic) task;
             epics.put(task.getId(), (Epic) task);
-    } else if (task instanceof Subtask) {
+        } else if (task instanceof Subtask) {
             Subtask subtask = (Subtask) task;
             subtasks.put(subtask.getId(), subtask);
             Epic epic = epics.get(subtask.getEpicId());
             if (epic != null) {
                 epic.addSubtaskId(subtask.getId());
             }
-    } else {
-        tasks.put(task.getId(), task);
-    }
+        } else {
+            tasks.put(task.getId(), task);
+        }
 
-    // Обновляем nextId для избежания конфликтов ID
-    if (nextId <= task.getId()) {
-        nextId = task.getId() + 1;
+        // Обновляем nextId для избежания конфликтов ID
+        if (nextId <= task.getId()) {
+            nextId = task.getId() + 1;
+        }
     }
-}
 
 
     /**
      * Метод сохраняет текущее состояние всех задач в файл в формате CSV.
+     *
      * @throws ManagerSaveException при ошибках записи в файл
      */
     protected void save() {
@@ -102,12 +106,12 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
         lines.add("id,type,name,status,description,epic");
 
         //Добавляем обычные задачи
-        for(Task task : tasks.values()) {
+        for (Task task : tasks.values()) {
             lines.add(toString(task));
         }
 
         // Добавляем все эпики
-        for (Epic epic: epics.values()) {
+        for (Epic epic : epics.values()) {
             lines.add(toString(epic));
         }
 
@@ -118,13 +122,15 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
 
         try {
             //Записываем все строки в файл
-            Files.writeString(file.toPath(),String.join("\n", lines));
+            Files.writeString(file.toPath(), String.join("\n", lines));
         } catch (IOException e) {
             throw new ManagerSaveException("Ошибка сохранения в файл", e);
         }
     }
+
     /**
      * Метод преобразует объект Task в строку CSV.
+     *
      * @param task Задача для преобразования.
      * @return Строка CSV, представляющая задачу
      */
@@ -132,15 +138,17 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
     private static String toString(Task task) {
         if (task instanceof Subtask) {
             Subtask subtask = (Subtask) task;
-            return String.join(",", Integer.toString(subtask.getId()), "SUBTASK", subtask.getName(),subtask.getStatus().toString(),subtask.getDescription(), Integer.toString(subtask.getEpicId()));
+            return String.join(",", Integer.toString(subtask.getId()), "SUBTASK", subtask.getName(), subtask.getStatus().toString(), subtask.getDescription(), Integer.toString(subtask.getEpicId()));
         } else if (task instanceof Epic) {
-            return String.join(",", Integer.toString(task.getId()), "EPIC", task.getName(),task.getStatus().toString(),task.getDescription(), "");
-        }else {
+            return String.join(",", Integer.toString(task.getId()), "EPIC", task.getName(), task.getStatus().toString(), task.getDescription(), "");
+        } else {
             return String.join(",", Integer.toString(task.getId()), "TASK", task.getName(), task.getStatus().toString(), task.getDescription(), "");
         }
     }
+
     /**
      * Метод создает Task из строки CSV.
+     *
      * @param value Строка CSV для разбора
      * @return Восстановленный объект Task
      * @throw IllegalArgumentException при неизвестном типе задачи
@@ -171,6 +179,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager{
 
         }
     }
+
     // Переопределяем методы родительского класса и сохраняем в файл
     @Override
     public void createTask(Task task) {
