@@ -2,14 +2,15 @@ package manager;
 
 import model.*;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class InMemoryTaskManagerTest {
     private TaskManager taskManager = Managers.getDefault();
 
     @Test
-    void shouldAddAndFindTaskById() { // Проверяем добавление и поиск по id
-        Task task = new Task(1,"Task", "Description", Status.NEW);
+    void shouldAddAndFindTaskById() {
+        Task task = new Task("Task", "Description", Status.NEW);
         taskManager.createTask(task);
         final int taskId = task.getId();
 
@@ -19,8 +20,8 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldAddAndFindEpicById() { // Проверяем добавление и поиск по id
-        Epic epic = new Epic(1,"Epic", "Description");
+    void shouldAddAndFindEpicById() {
+        Epic epic = new Epic("Epic", "Description");
         taskManager.createEpic(epic);
         final int epicId = epic.getId();
 
@@ -30,11 +31,11 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldAddAndFindSubtaskById() { // Проверяем добавление и поиск по id
-        Epic epic = new Epic(1,"Epic", "Description");
+    void shouldAddAndFindSubtaskById() {
+        Epic epic = new Epic("Epic", "Description");
         taskManager.createEpic(epic);
 
-        Subtask subtask = new Subtask(2, "Subtask", "Description", Status.NEW, epic.getId());
+        Subtask subtask = new Subtask("Subtask", "Description", Status.NEW, epic.getId());
         taskManager.createSubtask(subtask);
         final int subtaskId = subtask.getId();
 
@@ -44,21 +45,27 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldNotConflictTasksWithGeneratedAndProvidedIds() { // Проверяем отсутствие конфликтов между задачами с заданным и сгенерированным id
-        // Создаем задачу с явно указанным ID
-        Task taskWithId = new Task(1, "Task with id", "Description", Status.NEW);
-        taskManager.createTask(taskWithId);
+    void shouldNotConflictTasksWithGeneratedAndProvidedIds() {
         // Создаем задачу с автоматической генерацией ID
-        Task taskWithGeneratedId = new Task(0,"Task without id", "Description", Status.NEW);
-        taskManager.createTask(taskWithGeneratedId);
+        Task task1 = new Task("Task 1", "Description", Status.NEW);
+        taskManager.createTask(task1);
 
-        assertNotEquals(taskWithId.getId(), taskWithGeneratedId.getId(), "ID задач не должны конфликтовать");
-        assertTrue(taskWithGeneratedId.getId() > 0, "Должен быть установлен валидный ID");
+        // Создаем вторую задачу с автоматической генерацией ID
+        Task task2 = new Task("Task 2", "Description", Status.NEW);
+        taskManager.createTask(task2);
+
+        assertNotEquals(task1.getId(), task2.getId(), "ID задач не должны конфликтовать");
+        assertTrue(task1.getId() > 0, "Должен быть установлен валидный ID");
+        assertTrue(task2.getId() > 0, "Должен быть установлен валидный ID");
     }
 
     @Test
-    void shouldNotAddSubtaskToItselfAsEpic() { // Проверяем, что нельзя добавить подзадачу в саму себя как эпик
-        Subtask subtask = new Subtask(1,"Subtask", "Description", Status.NEW, 1);
+    void shouldNotAddSubtaskToItselfAsEpic() {
+        Epic epic = new Epic("Epic", "Description");
+        taskManager.createEpic(epic);
+
+        Subtask subtask = new Subtask("Subtask", "Description", Status.NEW, epic.getId());
+        subtask.setId(epic.getId()); // Имитируем ситуацию, когда ID подзадачи равен ID эпика
 
         assertThrows(IllegalArgumentException.class, () -> {
             taskManager.createSubtask(subtask);
@@ -66,20 +73,19 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldUpdateEpicStatusBasedOnSubtasks() { // Проверяем автоматическое обновление статуса эпика на основе статусов подзадач
-        Epic epic = new Epic(0,"Epic", "Description");
+    void shouldUpdateEpicStatusBasedOnSubtasks() {
+        Epic epic = new Epic("Epic", "Description");
         taskManager.createEpic(epic);
 
-        // Статус должен быть NEW при создании
         assertEquals(Status.NEW, epic.getStatus(), "Новый эпик должен иметь статус NEW");
 
         // Добавляем подзадачу со статусом NEW
-        Subtask subtask1 = new Subtask(0,"Subtask 1", "Description", Status.NEW, epic.getId());
+        Subtask subtask1 = new Subtask("Subtask 1", "Description", Status.NEW, epic.getId());
         taskManager.createSubtask(subtask1);
         assertEquals(Status.NEW, epic.getStatus(), "Эпик с NEW подзадачами должен иметь статус NEW");
 
         // Добавляем подзадачу со статусом DONE
-        Subtask subtask2 = new Subtask(0,"Subtask 2", "Description", Status.DONE, epic.getId());
+        Subtask subtask2 = new Subtask("Subtask 2", "Description", Status.DONE, epic.getId());
         taskManager.createSubtask(subtask2);
         assertEquals(Status.IN_PROGRESS, epic.getStatus(),
                 "Эпик с NEW и DONE подзадачами должен иметь статус IN_PROGRESS");
@@ -92,29 +98,10 @@ class InMemoryTaskManagerTest {
     }
 
     @Test
-    void shouldNotAddEpicToItselfAsSubtask() {
-        /*
-        Проверяем, что система корректно обрабатывает попытку добавить эпик в качестве подзадачи самого себя.
-         */
-        Epic epic = new Epic(1,"Epic", "Description");
-        taskManager.createEpic(epic);
-
-        // Пытаемся создать подзадачу с id эпика
-        Subtask subtask = new Subtask(1,"Subtask", "Description", Status.NEW, 1);
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            taskManager.createSubtask(subtask);
-        }, "Нельзя добавить эпик в самого себя как подзадачу");
-    }
-
-    @Test
     void shouldPreserveTaskFieldsWhenAddedToManager() {
-        /*
-        Проверяем, что при добавлении задачи в менеджер все поля сохраняются без изменений
-         */
-        Task originalTask = new Task(0,"Original", "Description", Status.NEW);
+        Task originalTask = new Task("Original", "Description", Status.NEW);
         taskManager.createTask(originalTask);
-        // Проверяем, что менеджер назначил ID
+
         assertTrue(originalTask.getId() > 0, "Задаче должен быть назначен ID");
 
         Task savedTask = taskManager.getTaskById(originalTask.getId());

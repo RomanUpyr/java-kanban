@@ -5,12 +5,17 @@ import java.util.List;
 
 // Класс для эпиков, наследуем от model.Task
 public class Epic extends Task {
-    private List<Integer> subtaskIds; // Список ids для подзадач входящих в эпик
+    private final List<Integer> subtaskIds; // Список ids для подзадач входящих в эпик
 
     // Конструктор для создания эпика
     public Epic(int id, String name, String description) {
         super(id, name, description, Status.NEW); // Эпик всегда создается со статусом NEW
         this.subtaskIds = new ArrayList<>();// Инициализируем список подзадач
+    }
+
+    public Epic(String name, String description) {
+        super(name, description, Status.NEW);
+        this.subtaskIds = new ArrayList<>();
     }
 
     // Геттер для списка идентификаторов подзадач

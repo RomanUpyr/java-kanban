@@ -23,17 +23,18 @@ public class Main {
         InMemoryTaskManager manager = new InMemoryTaskManager();
 
         // Создаем тестовые данные
-        Task task1 = new Task(0, "Task 1", "Description 1", Status.NEW);
-        Task task2 = new Task(0, "Task 2", "Description 2", Status.NEW);
+        Task task1 = new Task("Task 1", "Description 1", Status.NEW);
+        Task task2 = new Task("Task 2", "Description 2", Status.NEW);
         manager.createTask(task1);
         manager.createTask(task2);
 
-        Epic epic1 = new Epic(0, "Epic 1", "Description Epic 1");
+        Epic epic1 = new Epic("Epic 1", "Description Epic 1");
         manager.createEpic(epic1);
 
-        Subtask subtask1 = new Subtask(0, "Subtask 1", "Description Subtask 1",
+
+        Subtask subtask1 = new Subtask("Subtask 1", "Description Subtask 1",
                 Status.NEW, epic1.getId());
-        Subtask subtask2 = new Subtask(0, "Subtask 2", "Description Subtask 2",
+        Subtask subtask2 = new Subtask("Subtask 2", "Description Subtask 2",
                 Status.IN_PROGRESS, epic1.getId());
         manager.createSubtask(subtask1);
         manager.createSubtask(subtask2);
@@ -46,9 +47,23 @@ public class Main {
         printHistory(manager);
 
         // Тестируем удаление
-        System.out.println("\nПосле удаления задачи 1:");
+        System.out.println("\nПосле удаления задачи " + task1.getId() + ":");
         manager.deleteTaskById(task1.getId());
         printHistory(manager);
+    }
+
+    private static void printHistory(TaskManager manager) {
+        System.out.println("История просмотров:");
+        for (Task task : manager.getHistory()) {
+            // Чёткое разделение типов задач при выводе
+            if (task instanceof Epic) {
+                System.out.println("[Epic] " + task);
+            } else if (task instanceof Subtask) {
+                System.out.println("[Subtask] " + task);
+            } else {
+                System.out.println("[Task] " + task);
+            }
+        }
     }
 
     private static void testFileBackedTaskManager() {
@@ -62,13 +77,13 @@ public class Main {
             // Создаем и заполняем первый менеджер
             FileBackedTaskManager manager1 = new FileBackedTaskManager(file);
 
-            Task task = new Task(0, "Task", "Description", Status.NEW);
+            Task task = new Task(1, "Task", "Description", Status.NEW);
             manager1.createTask(task);
 
-            Epic epic = new Epic(0, "Epic", "Epic Description");
+            Epic epic = new Epic(1, "Epic", "Epic Description");
             manager1.createEpic(epic);
 
-            Subtask subtask = new Subtask(0, "Subtask", "Subtask Description",
+            Subtask subtask = new Subtask(2, "Subtask", "Subtask Description",
                     Status.DONE, epic.getId());
             manager1.createSubtask(subtask);
 

@@ -31,16 +31,21 @@ public class InMemoryHistoryManager implements HistoryManager {
      * Удаляет узел из двусвязного списка
      */
     private void removeNode(Node node) {
+        // Обновляем связи соседних узлов
         if (node.getPrev() != null) {
             node.getPrev().setNext(node.getNext());
         } else {
             head = node.getNext(); // Удаляемый узел был головой
         }
+
         if (node.getNext() != null) {
             node.getNext().setPrev(node.getPrev());
         } else {
             tail = node.getPrev(); // Удаляемый узел был хвостом
         }
+
+        // Удаляем узел из мапы
+        nodeMap.remove(node.getTask().getId());
     }
 
     /**
@@ -73,9 +78,8 @@ public class InMemoryHistoryManager implements HistoryManager {
 
     @Override
     public void remove(int id) {
-        Node node = nodeMap.remove(id);
-        if (node != null) {
-            removeNode(node);
+        if (nodeMap.containsKey(id)) {  // Проверяем наличие ключа
+            removeNode(nodeMap.get(id)); // Удаляем узел если он есть
         }
     }
 
