@@ -22,13 +22,26 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
      * Конструктор создает новый FileBackedTaskManager, использующий указанный файл для хранения.
      *
      * @param file файл для сохранения данных задач
-     * @throws IllegalArgumentException если файл равен null
+     * @throws ManagerLoadException если файл равен null
      */
     public FileBackedTaskManager(File file) {
         if (file == null) {
-            throw new IllegalArgumentException("Файл не может быть null");
+            throw new ManagerLoadException("Файл не может быть null");
         }
         this.file = file;
+    }
+
+    /**
+     * Собственное непроверяемое исключение для ошибок загрузки данных
+     */
+    public static class ManagerLoadException extends RuntimeException {
+        public ManagerLoadException(String message) {
+            super(message);
+        }
+
+        public ManagerLoadException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     /**
@@ -40,12 +53,8 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
      */
     public static FileBackedTaskManager loadFromFile(File file) {
         FileBackedTaskManager manager = new FileBackedTaskManager(file);
-        try {
-            if (file.exists()) {
-                manager.load();
-            }
-        } catch (ManagerSaveException e) {
-            System.err.println("Ошибка при загрузке из файла: " + e.getMessage());
+        if (file.exists()) {
+            manager.load();
         }
         return manager;
     }
@@ -78,7 +87,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     /**
      * Загружает задачи из файла и восстанавливает состояние менеджера.
      *
-     * @throws ManagerSaveException при ошибках чтения файла
+     * @throws ManagerLoadException при ошибках чтения файла
      */
     private void load() {
         try {
@@ -110,7 +119,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                 }
             }
         } catch (IOException e) {
-            throw new ManagerSaveException("Ошибка чтения из файла", e);
+            throw new ManagerLoadException("Ошибка чтения из файла", e);
         }
     }
 
@@ -140,18 +149,27 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     /**
+     * Исключение для ошибок валидации подзадач
+     */
+    public static class SubtaskValidationException extends RuntimeException {
+        public SubtaskValidationException(String message) {
+            super(message);
+        }
+    }
+
+    /**
      * Проверяет корректность подзадачи перед добавлением.
      *
      * @param subtask подзадача для проверки
-     * @throws IllegalArgumentException если данные подзадачи некорректны
+     * @throws SubtaskValidationException если данные подзадачи некорректны
      */
     private void validateSubtask(Subtask subtask) {
         if (subtask.getId() == subtask.getEpicId()) {
-            throw new IllegalArgumentException("Подзадача " + subtask.getId() +
+            throw new SubtaskValidationException("Подзадача " + subtask.getId() +
                     " не может ссылаться на саму себя как на эпик");
         }
         if (!epics.containsKey(subtask.getEpicId())) {
-            throw new IllegalArgumentException("Эпик " + subtask.getEpicId() +
+            throw new SubtaskValidationException("Эпик " + subtask.getEpicId() +
                     " для подзадачи " + subtask.getId() + " не существует");
         }
     }
