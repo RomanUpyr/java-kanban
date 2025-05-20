@@ -7,6 +7,9 @@ import model.Task;
 import java.util.Collection;
 import java.util.List;
 
+import java.util.Optional;
+import java.util.Set;
+
 public interface TaskManager {
     // Геттер для получения списка всех задач
     Collection<Task> getAllTasks();
@@ -36,13 +39,13 @@ public interface TaskManager {
     Epic getEpicById(int id);
 
     // Создание задачи
-    void createTask(Task task);
+    int createTask(Task task);
 
     // Создание подзадачи
-    void createSubtask(Subtask subtask);
+    int createSubtask(Subtask subtask);
 
     // Создание эпика
-    void createEpic(Epic epic);
+    int createEpic(Epic epic);
 
     // Обновление задачи
     void updateTask(Task task);
@@ -67,4 +70,11 @@ public interface TaskManager {
 
     // Возвращает список последних 10 просмотренных задач, в порядке из просмотра (от старых к новым)
     List<Task> getHistory();
+
+    // Новые методы для работы со временем
+    Set<Task> getPrioritizedTasks();
+
+    boolean isTasksOverlap(Task task1, Task task2);
+
+    boolean hasTaskOverlaps(Task newTask);
 }

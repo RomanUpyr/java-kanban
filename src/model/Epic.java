@@ -2,10 +2,16 @@ package model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+import manager.TaskManager;
 
 // Класс для эпиков, наследуем от model.Task
 public class Epic extends Task {
     private final List<Integer> subtaskIds; // Список ids для подзадач входящих в эпик
+    private LocalDateTime endTime;
 
     // Конструктор для создания эпика
     public Epic(int id, String name, String description) {
@@ -33,6 +39,47 @@ public class Epic extends Task {
         subtaskIds.remove((Integer) subtaskID); // Удаляем по значению
     }
 
+    /**
+     * Обновляет временные параметры эпика на основе подзадач
+     *
+     * @param taskManager менеджер задач для доступа к подзадачам
+     */
+    public void updateEpicFields(TaskManager taskManager) {
+        if (subtaskIds.isEmpty()) {
+            this.startTime = null;
+            this.duration = Duration.ZERO;
+            this.endTime = null;
+        }
+
+        List<Subtask> subtasks = taskManager.getSubtasksByEpicId(this.getId());
+
+        // Обновление времени начала (самая ранняя подзадача)
+        this.startTime = subtasks.stream()
+                .map(Subtask::getStartTime)
+                .filter(Objects::nonNull)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+
+        // Обновление продолжительности (сумма подзадач)
+        this.duration = subtasks.stream()
+                .map(Subtask::getDuration)
+                .filter(Objects::nonNull)
+                .reduce(Duration.ZERO, Duration::plus);
+
+        // Обновление времени окончания (самая поздняя подзадача)
+        this.endTime = subtasks.stream()
+                .map(Subtask::getEndTime)
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    @Override
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+
     // Переопределяем метод toString для удобного вывода информации об эпике
     @Override
     public String toString() {
@@ -42,6 +89,9 @@ public class Epic extends Task {
                 ", description='" + getDescription() + '\'' +
                 ", status=" + getStatus() +
                 ", subtaskIds=" + subtaskIds +
+                ", duration=" + (duration != null ? duration.toMinutes() : "null") +
+                ", startTime=" + (startTime != null ? startTime : "null") +
+                ", endTime=" + (endTime != null ? endTime : "null") +
                 '}';
     }
 }

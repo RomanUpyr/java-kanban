@@ -164,13 +164,23 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
      * @throws SubtaskValidationException если данные подзадачи некорректны
      */
     private void validateSubtask(Subtask subtask) {
-        if (subtask.getId() == subtask.getEpicId()) {
-            throw new SubtaskValidationException("Подзадача " + subtask.getId() +
-                    " не может ссылаться на саму себя как на эпик");
+        if (subtask == null) {
+            throw new SubtaskValidationException("Подзадача не может быть null");
         }
-        if (!epics.containsKey(subtask.getEpicId())) {
-            throw new SubtaskValidationException("Эпик " + subtask.getEpicId() +
-                    " для подзадачи " + subtask.getId() + " не существует");
+
+        int subtaskId = subtask.getId();
+        int epicId = subtask.getEpicId();
+
+        // Проверяем, что подзадача не ссылается на саму себя как на эпик
+        if (subtaskId == epicId) {
+            throw new SubtaskValidationException(
+                    "Подзадача " + subtaskId + " не может ссылаться на саму себя как на эпик");
+        }
+
+        // Проверяем существование эпика
+        if (!epics.containsKey(epicId)) {
+            throw new SubtaskValidationException(
+                    "Эпик " + epicId + " не найден для подзадачи " + subtaskId);
         }
     }
 
@@ -312,22 +322,39 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     // Переопределенные методы с сохранением состояния
 
     @Override
-    public void createTask(Task task) {
+    public int createTask(Task task) {
         super.createTask(task);
         save();
+        return 0;
     }
 
     @Override
-    public void createSubtask(Subtask subtask) {
+    public int createSubtask(Subtask subtask) {
         validateSubtask(subtask);
-        super.createSubtask(subtask);
+        int subtaskId = super.createSubtask(subtask);
         save();
+        return subtaskId;
     }
 
     @Override
-    public void createEpic(Epic epic) {
-        super.createEpic(epic);
+    public int createEpic(Epic epic) {
+        if (epic == null) {
+            throw new IllegalArgumentException("Epic не может быть null");
+        }
+
+        // Генерируем новый ID
+        int newId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE); // Введем метод генерации ID
+
+        // Устанавливаем ID эпику
+        epic.setId(newId);
+
+        // Сохраняем эпик
+        epics.put(newId, epic);
+
+        // Сохраняем изменения в файл
         save();
+
+        return newId;
     }
 
     @Override

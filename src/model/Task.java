@@ -1,6 +1,8 @@
 package model;
 
 import java.util.Objects;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 // Создаем базовый класс для задач
 public class Task {
@@ -9,8 +11,10 @@ public class Task {
     private String name; // Название задачи
     private String description; // Описание задачи
     private Status status; // Текущий статус задачи
+    protected Duration duration; // Продолжительность задачи в минутах
+    protected LocalDateTime startTime; // Дата и время начала выполнения задачи
 
-    // Конструктор для новых задач
+    // Конструкторы для новых задач
     public Task(String name, String description, Status status) {
         this.id = ++counter;
         this.name = Objects.requireNonNull(name, "Имя задачи не может быть null");
@@ -18,13 +22,32 @@ public class Task {
         this.status = Objects.requireNonNull(status, "Статус задачи не может быть null");
     }
 
-    // Конструктор для существующих задач (при загрузке из хранилища)
+    public Task(String name, String description, Status status, Duration duration, LocalDateTime startTime) {
+        this.id = ++counter;
+        this.name = Objects.requireNonNull(name, "Имя задачи не может быть null");
+        this.description = Objects.requireNonNull(description, "Описание задачи не может быть null");
+        this.status = Objects.requireNonNull(status, "Статус задачи не может быть null");
+        this.duration = duration;
+        this.startTime = startTime;
+    }
+
+    // Конструкторы для существующих задач (при загрузке из хранилища)
     public Task(int id, String name, String description, Status status) {
         this.id = id;
         this.name = Objects.requireNonNull(name, "Имя задачи не может быть null");
         this.description = Objects.requireNonNull(description, "Описание задачи не может быть null");
         this.status = Objects.requireNonNull(status, "Статус задачи не может быть null");
         if (id > counter) counter = id;
+    }
+
+    public Task(int id, String name, String description, Status status, Duration duration, LocalDateTime startTime) {
+        this.id = id;
+        this.name = Objects.requireNonNull(name, "Имя задачи не может быть null");
+        this.description = Objects.requireNonNull(description, "Описание задачи не может быть null");
+        this.status = Objects.requireNonNull(status, "Статус задачи не может быть null");
+        if (id > counter) counter = id;
+        this.duration = duration;
+        this.startTime = startTime;
     }
 
     // Создаем геттеры для полей задачи
@@ -36,10 +59,6 @@ public class Task {
         return name;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public String getDescription() {
         return description;
     }
@@ -48,6 +67,29 @@ public class Task {
         return status;
     }
 
+    public Duration getDuration() {
+        return duration;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    /**
+     * Рассчитываем время окончания задачи
+     *
+     * @return LocalDateTime время окончания или null, если не задано время начала или продолжительность
+     */
+    public LocalDateTime getEndTime() {
+        if (startTime == null || duration == null) {
+            return null;
+        }
+        return startTime.plus(duration);
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public void setName(String name) {
         this.name = name;
@@ -57,6 +99,7 @@ public class Task {
         this.status = status;
     }
 
+
     // Переопределяем метод toString для удобного вывода информации о задаче
     @Override
     public String toString() {
@@ -65,6 +108,8 @@ public class Task {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", status=" + status +
+                ", duration=" + (duration != null ? duration.toMinutes() : "null") +
+                ", startTime=" + (startTime != null ? startTime : "null") +
                 '}';
     }
 
@@ -74,12 +119,17 @@ public class Task {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
-        return id == task.id;
+        return id == task.id &&
+                Objects.equals(name, task.name) &&
+                Objects.equals(description, task.description) &&
+                status == task.status &&
+                Objects.equals(duration, task.duration) &&
+                Objects.equals(startTime, task.startTime);
     }
 
     // Переопределяем hashCode
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(id, name, description, status, duration, startTime);
     }
 }

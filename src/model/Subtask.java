@@ -1,5 +1,8 @@
 package model;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 // Создаем класс для подзадач, наследуем от model.Task
 public class Subtask extends Task {
     private final int epicId; // Индентификатор для эпика, к которому принадлежит задача
@@ -16,6 +19,11 @@ public class Subtask extends Task {
         this.epicId = epicId;
     }
 
+    public Subtask(int id, String name, String description, Status status,
+                   int epicId, Duration duration, LocalDateTime startTime) {
+        super(id, name, description, status, duration, startTime);
+        this.epicId = epicId;
+    }
 
     // Создаем геттер
     public int getEpicId() {
@@ -31,6 +39,20 @@ public class Subtask extends Task {
                 ", description='" + getDescription() + '\'' +
                 ", status=" + getStatus() +
                 ", epicId=" + epicId +
+                ", duration=" + (duration != null ? duration.toMinutes() : "null") +
+                ", startTime=" + (startTime != null ? startTime : "null") +
                 '}';
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
+    public Duration getDuration() {
+        return duration;
     }
 }
