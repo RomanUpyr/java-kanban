@@ -2,6 +2,9 @@ package model;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class TaskTest {
@@ -33,4 +36,35 @@ class TaskTest {
 
         assertEquals(task1.hashCode(), task2.hashCode(), "Хэш-коды задач с одинаковым id должны совпадать");
     }
+    @Test
+    void testTaskTimeManagement() {
+        LocalDateTime startTime = LocalDateTime.of(2023, 1, 1, 10, 0);
+        Duration duration = Duration.ofHours(2);
+        Task task = new Task("Task", "Description",Status.NEW, duration, startTime);
+
+        assertEquals(startTime, task.getStartTime());
+        assertEquals(duration, task.getDuration());
+        assertEquals(startTime.plus(duration), task.getEndTime());
+    }
+
+    @Test
+    void testTaskWithoutTime() {
+        Task task = new Task("Task", "Description", Status.NEW);
+
+        assertNull(task.getStartTime());
+        assertNull(task.getDuration());
+        assertNull(task.getEndTime());
+    }
+
+    @Test
+    void testTaskToString() {
+        LocalDateTime startTime = LocalDateTime.of(2023, 1, 1, 10, 0);
+        Duration duration = Duration.ofHours(1);
+        Task task = new Task("Task", "Description", Status.NEW, duration, startTime);
+
+        String expected = "Task{id=0, title='Task', description='Description', " +
+                "status=NEW, startTime=2023-01-01T10:00, duration=PT1H}";
+        assertEquals(expected, task.toString());
+    }
+
 }

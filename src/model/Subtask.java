@@ -2,6 +2,7 @@ package model;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 // Создаем класс для подзадач, наследуем от model.Task
 public class Subtask extends Task {
@@ -33,16 +34,31 @@ public class Subtask extends Task {
     // Переопределяем метод toString для удобного вывода информации о подзадаче
     @Override
     public String toString() {
-        return "model.Task{" +
-                "id=" + getId() +
-                ", name='" + getName() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", status=" + getStatus() +
+        return "Subtask{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", status=" + status +
                 ", epicId=" + epicId +
-                ", duration=" + (duration != null ? duration.toMinutes() : "null") +
-                ", startTime=" + (startTime != null ? startTime : "null") +
+                ", duration=" + duration +
+                ", startTime=" + startTime +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Subtask subtask = (Subtask) o;
+        return epicId == subtask.epicId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), epicId);
+    }
+
 
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;

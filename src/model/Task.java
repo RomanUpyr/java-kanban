@@ -7,10 +7,10 @@ import java.time.LocalDateTime;
 // Создаем базовый класс для задач
 public class Task {
     private static int counter = 0;
-    private int id; // Уникальный идентификатор задачи
-    private String name; // Название задачи
-    private String description; // Описание задачи
-    private Status status; // Текущий статус задачи
+    protected int id; // Уникальный идентификатор задачи
+    protected String name; // Название задачи
+    protected String description; // Описание задачи
+    protected Status status; // Текущий статус задачи
     protected Duration duration; // Продолжительность задачи в минутах
     protected LocalDateTime startTime; // Дата и время начала выполнения задачи
 
@@ -103,13 +103,13 @@ public class Task {
     // Переопределяем метод toString для удобного вывода информации о задаче
     @Override
     public String toString() {
-        return "model.Task{" +
+        return "Task{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", status=" + status +
-                ", duration=" + (duration != null ? duration.toMinutes() : "null") +
-                ", startTime=" + (startTime != null ? startTime : "null") +
+                ", duration=" + duration +
+                ", startTime=" + startTime +
                 '}';
     }
 
@@ -119,17 +119,12 @@ public class Task {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Task task = (Task) o;
-        return id == task.id &&
-                Objects.equals(name, task.name) &&
-                Objects.equals(description, task.description) &&
-                status == task.status &&
-                Objects.equals(duration, task.duration) &&
-                Objects.equals(startTime, task.startTime);
+        return id == task.id;
     }
 
     // Переопределяем hashCode
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, description, status, duration, startTime);
+        return Objects.hash(id);
     }
 }

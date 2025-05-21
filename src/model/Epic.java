@@ -83,15 +83,28 @@ public class Epic extends Task {
     // Переопределяем метод toString для удобного вывода информации об эпике
     @Override
     public String toString() {
-        return "model.Epic{" +
-                "id=" + getId() +
-                ", name='" + getName() + '\'' +
-                ", description='" + getDescription() + '\'' +
-                ", status=" + getStatus() +
+        return "Epic{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", status=" + status +
                 ", subtaskIds=" + subtaskIds +
-                ", duration=" + (duration != null ? duration.toMinutes() : "null") +
-                ", startTime=" + (startTime != null ? startTime : "null") +
-                ", endTime=" + (endTime != null ? endTime : "null") +
+                ", duration=" + duration +
+                ", startTime=" + startTime +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Epic epic = (Epic) o;
+        return Objects.equals(subtaskIds, epic.subtaskIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), subtaskIds);
     }
 }
