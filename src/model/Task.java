@@ -1,5 +1,6 @@
 package model;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -75,6 +76,14 @@ public class Task {
         return startTime;
     }
 
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setDuration(Duration duration) {
+        this.duration = duration;
+    }
+
     /**
      * Рассчитываем время окончания задачи
      *
@@ -89,10 +98,6 @@ public class Task {
 
     public void setId(int id) {
         this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public void setStatus(Status status) {
@@ -126,5 +131,9 @@ public class Task {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public static void resetCounter() {
+        counter = 0;
     }
 }

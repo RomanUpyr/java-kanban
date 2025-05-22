@@ -20,7 +20,7 @@ public class Main {
 
     private static void testInMemoryTaskManager() {
         System.out.println("*** Тестирование InMemoryTaskManager ***");
-        TaskManager manager = Managers.getDefault(); // Используем фабричный метод
+        TaskManager manager = Managers.getDefault();
 
         // Создаем тестовые данные
         Task task1 = new Task("Task 1", "Description 1", Status.NEW);

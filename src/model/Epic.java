@@ -31,6 +31,9 @@ public class Epic extends Task {
 
     // Метод для добавления индентификатора подзадачи в эпик
     public void addSubtaskId(int subtaskID) {
+        if (subtaskID <= 0) {
+            throw new IllegalArgumentException("ID подзадачи должен быть положительным числом");
+        }
         subtaskIds.add(subtaskID);
     }
 

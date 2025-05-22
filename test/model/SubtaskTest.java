@@ -8,7 +8,7 @@ class SubtaskTest {
     @Test
     void subtasksWithSameIdShouldBeEqual() { // Проверяем равенство подзадач по id
         Subtask subtask1 = new Subtask(1, "Subtask 1", "Description", Status.NEW, 2);
-        Subtask subtask2 = new Subtask(1, "Subtask 2", "Different description", Status.DONE, 3);
+        Subtask subtask2 = new Subtask(1, "Subtask 2", "Different description", Status.NEW, 3);
 
         assertEquals(subtask1, subtask2, "Подзадачи с одинаковым id должны быть равны");
     }

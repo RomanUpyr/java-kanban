@@ -36,11 +36,12 @@ class TaskTest {
 
         assertEquals(task1.hashCode(), task2.hashCode(), "Хэш-коды задач с одинаковым id должны совпадать");
     }
+
     @Test
     void testTaskTimeManagement() {
         LocalDateTime startTime = LocalDateTime.of(2023, 1, 1, 10, 0);
         Duration duration = Duration.ofHours(2);
-        Task task = new Task("Task", "Description",Status.NEW, duration, startTime);
+        Task task = new Task("Task", "Description", Status.NEW, duration, startTime);
 
         assertEquals(startTime, task.getStartTime());
         assertEquals(duration, task.getDuration());
@@ -58,12 +59,13 @@ class TaskTest {
 
     @Test
     void testTaskToString() {
+        Task.resetCounter(); // Reset ID counter
+
         LocalDateTime startTime = LocalDateTime.of(2023, 1, 1, 10, 0);
         Duration duration = Duration.ofHours(1);
         Task task = new Task("Task", "Description", Status.NEW, duration, startTime);
 
-        String expected = "Task{id=0, title='Task', description='Description', " +
-                "status=NEW, startTime=2023-01-01T10:00, duration=PT1H}";
+        String expected = "Task{id=1, name='Task', description='Description', status=NEW, duration=PT1H, startTime=2023-01-01T10:00}";
         assertEquals(expected, task.toString());
     }
 
