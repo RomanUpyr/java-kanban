@@ -95,11 +95,11 @@ class FileBackedTaskManagerTest {
     @Test
     @DisplayName("Обработка невалидного файла")
     void shouldThrowWhenFileInvalid() {
-        assertThrows(ManagerSaveException.class, () -> {
-            FileBackedTaskManager manager = new FileBackedTaskManager(new File("/invalid/path"));
-            manager.createTask(new Task(1, "Test", "Description", Status.NEW));
-            manager.save();
-        }, "Должно выбрасываться исключение при работе с невалидным файлом");
+        File invalidFile = new File("/invalid/path/nonexistent.csv");
+        assertThrows(ManagerSaveException.class, () ->
+                        FileBackedTaskManager.loadFromFile(invalidFile)
+                , "Должно выбрасываться исключение при работе с невалидным файлом");
+
     }
 
     @Test

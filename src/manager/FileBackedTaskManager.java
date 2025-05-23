@@ -62,10 +62,15 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
      * @return новый FileBackedTaskManager с восстановленным состоянием
      */
     public static FileBackedTaskManager loadFromFile(File file) {
-        FileBackedTaskManager manager = new FileBackedTaskManager(file);
-        if (file.exists()) {
-            manager.load();
+        if (!file.exists()) {
+            throw new ManagerSaveException("Файл не существует: " + file.getPath());
         }
+        if (!file.canRead()) {
+            throw new ManagerSaveException("Невозможно прочитать файл: " + file.getPath());
+        }
+
+        FileBackedTaskManager manager = new FileBackedTaskManager(file);
+        manager.load();
         return manager;
     }
 
