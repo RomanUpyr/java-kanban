@@ -4,7 +4,6 @@ import model.Epic;
 import model.Subtask;
 import model.Task;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -67,5 +66,5 @@ public interface TaskManager {
     List<Subtask> getSubtasksByEpicId(int epicId);
 
     // Возвращает список последних 10 просмотренных задач, в порядке из просмотра (от старых к новым)
-    List <Task> getHistory();
+    List<Task> getHistory();
 }

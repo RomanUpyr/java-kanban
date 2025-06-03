@@ -2,16 +2,22 @@ package manager;
 
 import model.Task;
 import model.Status;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
 class InMemoryHistoryManagerTest {
-    private HistoryManager historyManager = new InMemoryHistoryManager();
+    private HistoryManager historyManager;
+
+    @BeforeEach
+    void setUp() {
+        historyManager = new InMemoryHistoryManager();
+    }
 
     @Test
-    void shouldAddTasksToHistory() { // Проверяем добавление задач в историю
+    void shouldAddTasksToHistory() {
         Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
         Task task2 = new Task(2, "Task 2", "Description", Status.NEW);
 
@@ -25,23 +31,81 @@ class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void shouldLimitHistorySize() { // Проверяем ограничение размера истории
-        for (int i = 1; i <= 15; i++) {
-            Task task = new Task(i, "Task " + i, "Description", Status.NEW);
-            historyManager.add(task);
-        }
+    void shouldNotAddDuplicateTasks() {
+        Task task = new Task(1, "Task", "Description", Status.NEW);
+
+        historyManager.add(task);
+        historyManager.add(task); // Добавляем ту же задачу второй раз
 
         List<Task> history = historyManager.getHistory();
-        assertEquals(10, history.size(), "История должна быть ограничена 10 задачами");
-        assertEquals(6, history.get(0).getId(), "Первая задача должна быть 6-й (старые удаляются)");
-        assertEquals(15, history.get(9).getId(), "Последняя задача должна быть 15-й");
+        assertEquals(1, history.size(), "Дубликаты не должны добавляться в историю");
+    }
+
+    @Test
+    void shouldRemoveTaskFromHistory() {
+        Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
+        Task task2 = new Task(2, "Task 2", "Description", Status.NEW);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+
+        historyManager.remove(1);
+
+        List<Task> history = historyManager.getHistory();
+        assertEquals(1, history.size(), "Задача не была удалена из истории");
+        assertEquals(task2, history.get(0), "Оставшаяся задача не совпадает");
+    }
+
+    @Test
+    void shouldRemoveTaskFromMiddleOfHistory() {
+        Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
+        Task task2 = new Task(2, "Task 2", "Description", Status.NEW);
+        Task task3 = new Task(3, "Task 3", "Description", Status.NEW);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task3);
+
+        historyManager.remove(2);
+
+        List<Task> history = historyManager.getHistory();
+        assertEquals(2, history.size(), "Неверное количество задач после удаления");
+        assertEquals(task1, history.get(0), "Первая задача не совпадает");
+        assertEquals(task3, history.get(1), "Последняя задача не совпадает");
+    }
+
+    @Test
+    void shouldRemoveTaskFromHeadOfHistory() {
+        Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
+        Task task2 = new Task(2, "Task 2", "Description", Status.NEW);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+
+        historyManager.remove(1);
+
+        List<Task> history = historyManager.getHistory();
+        assertEquals(1, history.size(), "Неверное количество задач после удаления головы");
+        assertEquals(task2, history.get(0), "Новая голова не совпадает");
+    }
+
+    @Test
+    void shouldRemoveTaskFromTailOfHistory() {
+        Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
+        Task task2 = new Task(2, "Task 2", "Description", Status.NEW);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+
+        historyManager.remove(2);
+
+        List<Task> history = historyManager.getHistory();
+        assertEquals(1, history.size(), "Неверное количество задач после удаления хвоста");
+        assertEquals(task1, history.get(0), "Хвост не обновился корректно");
     }
 
     @Test
     void shouldPreserveTaskFieldsInHistory() {
-        /* Проверяем, что при добавлении задачи в историю просмотров все её основные поля
-        (название, описание, статус) сохраняются без изменений.
-         */
         Task originalTask = new Task(1, "Original", "Description", Status.NEW);
         historyManager.add(originalTask);
 
@@ -51,5 +115,36 @@ class InMemoryHistoryManagerTest {
                 "Описание задачи в истории изменилось");
         assertEquals(originalTask.getStatus(), historyTask.getStatus(),
                 "Статус задачи в истории изменился");
+    }
+
+    @Test
+    void shouldHandleEmptyHistory() {
+        List<Task> history = historyManager.getHistory();
+        assertTrue(history.isEmpty(), "История должна быть пустой при инициализации");
+    }
+
+    @Test
+    void shouldNotFailWhenRemovingNonExistentTask() {
+        historyManager.remove(999); // Попытка удалить несуществующую задачу
+        // Ожидаем, что исключения не будет
+    }
+
+    @Test
+    void shouldMaintainOrderAfterMultipleOperations() {
+        Task task1 = new Task(1, "Task 1", "Description", Status.NEW);
+        Task task2 = new Task(2, "Task 2", "Description", Status.NEW);
+        Task task3 = new Task(3, "Task 3", "Description", Status.NEW);
+
+        historyManager.add(task1);
+        historyManager.add(task2);
+        historyManager.add(task3);
+        historyManager.remove(2);
+        historyManager.add(task2);
+
+        List<Task> history = historyManager.getHistory();
+        assertEquals(3, history.size(), "Неверное количество задач после операций");
+        assertEquals(task1, history.get(0), "Первая задача не совпадает");
+        assertEquals(task3, history.get(1), "Вторая задача не совпадает");
+        assertEquals(task2, history.get(2), "Третья задача не совпадает");
     }
 }

@@ -2,33 +2,85 @@ package manager;
 
 import model.Task;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class InMemoryHistoryManager implements HistoryManager{
-    private final LinkedList<Task> history = new LinkedList<>(); // Для хранения истории просмотров
-    private static final int MAX_HISTORY_SIZE = 10; // Максимальный размер истории просмотров
+public class InMemoryHistoryManager implements HistoryManager {
 
-    /*
-        Метод добавляет задачу в конец истории.
-        Если размер истории превышает MAX_HISTORY_SIZE, удаляет самый старый элемент
+    private final Map<Integer, Node> nodeMap = new HashMap<>();
+    private Node head;
+    private Node tail;
+
+    /**
+     * Добавляет задачу в конец двусвязного списка
      */
+    private void linkLast(Task task) {
+        final Node oldTail = tail;
+        final Node newNode = new Node(task, oldTail, null);
+        tail = newNode;
+        if (oldTail == null) {
+            head = newNode;
+        } else {
+            oldTail.setNext(newNode);
+        }
+    }
+
+    /**
+     * Удаляет узел из двусвязного списка
+     */
+    private void removeNode(Node node) {
+        if (node.getPrev() != null) {
+            node.getPrev().setNext(node.getNext());
+        } else {
+            head = node.getNext(); // Удаляемый узел был головой
+        }
+        if (node.getNext() != null) {
+            node.getNext().setPrev(node.getPrev());
+        } else {
+            tail = node.getPrev(); // Удаляемый узел был хвостом
+        }
+    }
+
+    /**
+     * Собирает все задачи из двусвязного списка в ArrayList
+     */
+    private List<Task> getTasks() {
+        List<Task> tasks = new ArrayList<>();
+        Node current = head;
+        while (current != null) {
+            tasks.add(current.getTask());
+            current = current.getNext();
+        }
+        return tasks;
+    }
+
     @Override
     public void add(Task task) {
         if (task == null) {
             return;
         }
-        history.addLast(task);
 
-        if (history.size() > MAX_HISTORY_SIZE) {
-            history.removeFirst();
-        }
+        // Удаляем задачу, если она уже есть в истории
+        remove(task.getId());
 
+        // Добавляем задачу в конец списка
+        linkLast(task);
+        // Сохраняем ссылку на узел в мапу
+        nodeMap.put(task.getId(), tail);
     }
-    // Метод возвращает копию текущей истории просмотров
+
+    @Override
+    public void remove(int id) {
+        Node node = nodeMap.remove(id);
+        if (node != null) {
+            removeNode(node);
+        }
+    }
+
     @Override
     public List<Task> getHistory() {
-        return new ArrayList<>(history);
+        return getTasks();
     }
 }

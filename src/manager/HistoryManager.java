@@ -11,9 +11,14 @@ public interface HistoryManager {
 
     void add(Task task);
 
+    /* Метод для удаления задачи из просмотра
+     */
+    void remove(int id);
+
     /* Метод возвращает список задач.
        Список последних просмотренных задач в порядке их просмотра.
      */
+
     List<Task> getHistory();
 }
 
