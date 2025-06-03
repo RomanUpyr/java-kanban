@@ -4,17 +4,27 @@ import java.util.Objects;
 
 // Создаем базовый класс для задач
 public class Task {
+    private static int counter = 0;
     private int id; // Уникальный идентификатор задачи
     private String name; // Название задачи
     private String description; // Описание задачи
     private Status status; // Текущий статус задачи
 
-    // Создаем конструктор для создания задачи
+    // Конструктор для новых задач
+    public Task(String name, String description, Status status) {
+        this.id = ++counter;
+        this.name = Objects.requireNonNull(name, "Имя задачи не может быть null");
+        this.description = Objects.requireNonNull(description, "Описание задачи не может быть null");
+        this.status = Objects.requireNonNull(status, "Статус задачи не может быть null");
+    }
+
+    // Конструктор для существующих задач (при загрузке из хранилища)
     public Task(int id, String name, String description, Status status) {
         this.id = id;
-        this.name = name;
-        this.description = description;
-        this.status = status;
+        this.name = Objects.requireNonNull(name, "Имя задачи не может быть null");
+        this.description = Objects.requireNonNull(description, "Описание задачи не может быть null");
+        this.status = Objects.requireNonNull(status, "Статус задачи не может быть null");
+        if (id > counter) counter = id;
     }
 
     // Создаем геттеры для полей задачи
@@ -26,6 +36,10 @@ public class Task {
         return name;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -34,10 +48,6 @@ public class Task {
         return status;
     }
 
-    // Создаем сеттеры для полей задачи
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public void setName(String name) {
         this.name = name;
