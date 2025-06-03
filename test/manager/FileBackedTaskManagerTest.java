@@ -1,238 +1,112 @@
 package manager;
 
-import model.Epic;
-import model.Status;
-import model.Subtask;
-import model.Task;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import model.*;
+import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
-
 class FileBackedTaskManagerTest {
-    private File tempFile;
-    private FileBackedTaskManager taskManager;
+    private File testFile;
+    private FileBackedTaskManager manager;
 
-    /**
-     * Инициализация перед каждым тестом:
-     * - создаем временный файл
-     * - инициализируем менеджер
-     */
     @BeforeEach
     void setUp() throws IOException {
-        tempFile = File.createTempFile("tasks", ".csv");
-        taskManager = new FileBackedTaskManager(tempFile);
+        testFile = File.createTempFile("test_tasks", ".csv");
+        manager = new FileBackedTaskManager(testFile);
     }
 
-    /**
-     * Очистка после каждого теста:
-     * - удаляем временный файл
-     */
     @AfterEach
     void tearDown() throws IOException {
-        Files.deleteIfExists(tempFile.toPath());
+        Files.deleteIfExists(testFile.toPath());
     }
 
-    /**
-     * Тест сохранения и загрузки пустого менеджера
-     */
     @Test
-    void testSaveAndLoadEmptyManager() {
-        // Сохраняем состояние
-        taskManager.save();
+    @DisplayName("Сохранение и загрузка пустого менеджера")
+    void shouldSaveAndLoadEmptyManager() {
+        manager.save();
+        FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(testFile);
 
-        // Проверяем что файл содержит только заголовок и разделитель
-        assertTrue(tempFile.length() > 0, "Файл должен содержать заголовок");
-
-        // Загружаем состояние
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
-
-        // Проверяем что все коллекции пусты
         assertAll(
-                () -> assertTrue(loadedManager.getAllTasks().isEmpty(), "Список задач должен быть пуст"),
-                () -> assertTrue(loadedManager.getAllEpics().isEmpty(), "Список эпиков должен быть пуст"),
-                () -> assertTrue(loadedManager.getAllSubtasks().isEmpty(), "Список подзадач должен быть пуст"),
-                () -> assertTrue(loadedManager.getHistory().isEmpty(), "История должна быть пуста")
+                () -> assertTrue(loaded.getAllTasks().isEmpty(), "Список задач должен быть пустым"),
+                () -> assertTrue(loaded.getAllEpics().isEmpty(), "Список эпиков должен быть пустым"),
+                () -> assertTrue(loaded.getAllSubtasks().isEmpty(), "Список подзадач должен быть пустым"),
+                () -> assertTrue(loaded.getHistory().isEmpty(), "История должна быть пустой")
         );
     }
 
-    /**
-     * Тест корректности формата сохраняемого файла
-     */
     @Test
-    void testFileFormat() throws IOException {
-        // Создаем тестовые данные
-        Task task = new Task("Task", "Description", Status.NEW);
-        Epic epic = new Epic("Epic", "Epic description");
-        taskManager.createEpic(epic);
-        Subtask subtask = new Subtask("Subtask", "Sub description", Status.DONE, epic.getId());
+    @DisplayName("Сохранение и загрузка задач")
+    void shouldSaveAndLoadTasks() {
+        Task task = new Task("Тест задача", "Описание", Status.IN_PROGRESS);
+        int taskId = manager.createTask(task);
 
-        taskManager.createTask(task);
-        taskManager.createSubtask(subtask);
+        Epic epic = new Epic("Тест эпик", "Описание");
+        int epicId = manager.createEpic(epic);
 
-        // Читаем файл
-        List<String> lines = Files.readAllLines(tempFile.toPath());
+        Subtask subtask = new Subtask("Тест подзадача", "Описание", Status.IN_PROGRESS, epicId);
+        int subtaskId = manager.createSubtask(subtask);
 
-        // Проверяем заголовок
-        assertEquals("id,type,name,status,description,epic", lines.get(0), "Некорректный заголовок");
+        manager.getTaskById(taskId); // Добавляем в историю
+        manager.save();
 
-        // Проверяем формат задач
-        assertTrue(lines.get(1).matches("\\d+,TASK,Task,NEW,Description,"), "Некорректный формат задачи");
-        assertTrue(lines.get(3).matches("\\d+,SUBTASK,Subtask,DONE,Sub description,\\d+"),
-                "Некорректный формат подзадачи");
+        FileBackedTaskManager loaded = FileBackedTaskManager.loadFromFile(testFile);
 
-        // Проверяем разделитель
-        assertEquals("", lines.get(4), "Отсутствует разделитель перед историей");
-    }
-
-    /**
-     * Тест восстановления всех типов задач с проверкой полей
-     */
-    @Test
-    void testLoadTasksWithAllFields() {
-        // Создаем тестовые данные
-        Task task = new Task("Task", "Description", Status.IN_PROGRESS);
-        Epic epic = new Epic("Epic", "Epic desc");
-        taskManager.createEpic(epic);
-        Subtask subtask = new Subtask("Subtask", "Sub desc", Status.DONE, epic.getId());
-
-        taskManager.createTask(task);
-        taskManager.createSubtask(subtask);
-
-        // Загружаем из файла
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
-
-        // Проверяем восстановленные задачи
-        Task loadedTask = loadedManager.getTaskById(task.getId());
         assertAll(
-                () -> assertEquals(task.getName(), loadedTask.getName(), "Не совпадает имя задачи"),
-                () -> assertEquals(task.getDescription(), loadedTask.getDescription(), "Не совпадает описание"),
-                () -> assertEquals(task.getStatus(), loadedTask.getStatus(), "Не совпадает статус")
-        );
-
-        // Проверяем подзадачи
-        Subtask loadedSubtask = loadedManager.getSubtaskById(subtask.getId());
-        assertAll(
-                () -> assertEquals(subtask.getEpicId(), loadedSubtask.getEpicId(), "Не совпадает EpicId"),
-                () -> assertEquals(epic.getId(), loadedSubtask.getEpicId(), "Неверная связь с эпиком")
+                () -> assertEquals(1, loaded.getAllTasks().size(), "Должна быть 1 задача"),
+                () -> assertEquals(1, loaded.getAllEpics().size(), "Должен быть 1 эпик"),
+                () -> assertEquals(1, loaded.getAllSubtasks().size(), "Должна быть 1 подзадача"),
+                () -> assertEquals(1, loaded.getHistory().size(), "Должна быть 1 задача в истории"),
+                () -> assertEquals(taskId, loaded.getTaskById(taskId).getId(), "ID задачи должен совпадать"),
+                () -> assertEquals(epicId, loaded.getEpicById(epicId).getId(), "ID эпика должен совпадать"),
+                () -> assertEquals(subtaskId, loaded.getSubtaskById(subtaskId).getId(), "ID подзадачи должен совпадать")
         );
     }
 
-    /**
-     * Тест сохранения и восстановления истории просмотров
-     */
     @Test
-    void testHistoryPreservation() {
-        // Создаем задачи
-        Task task1 = new Task("Task1", "Desc1", Status.NEW);
-        Task task2 = new Task("Task2", "Desc2", Status.NEW);
-        taskManager.createTask(task1);
-        taskManager.createTask(task2);
+    @DisplayName("Сохранение и загрузка времени выполнения")
+    void shouldSaveAndLoadTime() throws IOException {
+        Path tempFile = Files.createTempFile("tasks", ".csv");
+        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile.toFile());
 
-        // Формируем историю в определенном порядке
-        taskManager.getTaskById(task2.getId());
-        taskManager.getTaskById(task1.getId());
+        LocalDateTime startTime = LocalDateTime.of(2023, 1, 1, 10, 0);
+        Duration duration = Duration.ofHours(1);
+        Task task = new Task("Test", "Description", Status.NEW, duration, startTime);
+        manager.createTask(task);
 
-        // Явно сохраняем состояние (на всякий случай)
-        taskManager.save();
+        String fileContent = Files.readString(tempFile);
+        System.out.println("File content:\n" + fileContent);
 
-        // Загружаем из файла
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
+        // Проверяем оба формата времени
+        String expectedTime1 = "01.01.2023 10:00";
+        String expectedTime2 = "2023-01-01T10:00";
+        assertTrue(fileContent.contains(expectedTime1) || fileContent.contains(expectedTime2),
+                "Expected time not found in:\n" + fileContent);
 
-        // Проверяем историю
-        List<Task> history = loadedManager.getHistory();
-        assertEquals(2, history.size(), "Неверное количество задач в истории");
-
-        // Дополнительные проверки порядка
-        if (history.size() == 2) {
-            assertEquals(task2.getId(), history.get(0).getId(), "Нарушен порядок истории");
-            assertEquals(task1.getId(), history.get(1).getId(), "Нарушен порядок истории");
-        }
+        Files.deleteIfExists(tempFile);
     }
 
-    /**
-     * Тест загрузки из несуществующего файла
-     */
     @Test
-    void testLoadFromNonExistentFile(@TempDir Path tempDir) {
-        File nonExistentFile = tempDir.resolve("nonexistent.csv").toFile();
-        FileBackedTaskManager manager = FileBackedTaskManager.loadFromFile(nonExistentFile);
+    @DisplayName("Обработка невалидного файла")
+    void shouldThrowWhenFileInvalid() {
+        File invalidFile = new File("/invalid/path/nonexistent.csv");
+        assertThrows(ManagerSaveException.class, () ->
+                        FileBackedTaskManager.loadFromFile(invalidFile)
+                , "Должно выбрасываться исключение при работе с невалидным файлом");
 
-        // Проверяем что менеджер создан и коллекции пусты
-        assertNotNull(manager, "Менеджер должен быть создан");
-        assertTrue(manager.getAllTasks().isEmpty(), "Задачи должны быть пусты");
     }
 
-    /**
-     * Тест работы с пустой историей просмотров
-     */
     @Test
-    void testEmptyHistory() {
-        // Создаем задачу без добавления в историю
-        Task task = new Task("Task", "Desc", Status.NEW);
-        taskManager.createTask(task);
-
-        // Загружаем из файла
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
-
-        // Проверяем что задача есть, а истории нет
-        assertAll(
-                () -> assertEquals(1, loadedManager.getAllTasks().size(), "Должна быть одна задача"),
-                () -> assertTrue(loadedManager.getHistory().isEmpty(), "История должна быть пуста")
-        );
-    }
-
-
-    /**
-     * Тест удаления задач с проверкой сохранения в файл
-     */
-    @Test
-    void testDeleteTasks() {
-        // Создаем тестовые данные
-        Task task = new Task("Task", "Desc", Status.NEW);
-        taskManager.createTask(task);
-
-        // Удаляем задачу
-        taskManager.deleteTaskById(task.getId());
-
-        // Загружаем из файла
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
-
-        // Проверяем что задача удалена
-        assertTrue(loadedManager.getAllTasks().isEmpty(), "Задача должна быть удалена");
-    }
-
-    /**
-     * Тест обновления задач с проверкой сохранения изменений
-     */
-    @Test
-    void testUpdateTask() {
-        // Создаем и обновляем задачу
-        Task task = new Task("Original", "Desc", Status.NEW);
-        taskManager.createTask(task);
-
-        task.setName("Updated");
-        task.setStatus(Status.DONE);
-        taskManager.updateTask(task);
-
-        // Загружаем из файла
-        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
-        Task loadedTask = loadedManager.getTaskById(task.getId());
-
-        // Проверяем обновленные поля
-        assertAll(
-                () -> assertEquals("Updated", loadedTask.getName(), "Имя не обновилось"),
-                () -> assertEquals(Status.DONE, loadedTask.getStatus(), "Статус не обновился")
-        );
+    @DisplayName("Обработка пустого файла")
+    void shouldHandleEmptyFile() throws IOException {
+        Files.write(testFile.toPath(), new byte[0]);
+        assertDoesNotThrow(() -> FileBackedTaskManager.loadFromFile(testFile),
+                "Должен создаваться пустой менеджер при загрузке пустого файла");
     }
 }

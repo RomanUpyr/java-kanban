@@ -1,4 +1,5 @@
 import manager.*;
+import manager.TaskManager;
 
 import model.Epic;
 import model.Status;
@@ -7,7 +8,6 @@ import model.Task;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -20,7 +20,7 @@ public class Main {
 
     private static void testInMemoryTaskManager() {
         System.out.println("*** Тестирование InMemoryTaskManager ***");
-        InMemoryTaskManager manager = new InMemoryTaskManager();
+        TaskManager manager = Managers.getDefault();
 
         // Создаем тестовые данные
         Task task1 = new Task("Task 1", "Description 1", Status.NEW);
@@ -29,20 +29,19 @@ public class Main {
         manager.createTask(task2);
 
         Epic epic1 = new Epic("Epic 1", "Description Epic 1");
-        manager.createEpic(epic1);
-
+        int epicId = manager.createEpic(epic1);
 
         Subtask subtask1 = new Subtask("Subtask 1", "Description Subtask 1",
-                Status.NEW, epic1.getId());
+                Status.NEW, epicId);
         Subtask subtask2 = new Subtask("Subtask 2", "Description Subtask 2",
-                Status.IN_PROGRESS, epic1.getId());
+                Status.IN_PROGRESS, epicId);
         manager.createSubtask(subtask1);
         manager.createSubtask(subtask2);
 
         // Тестируем историю просмотров
         System.out.println("\nТестирование истории просмотров:");
         manager.getTaskById(task1.getId());
-        manager.getEpicById(epic1.getId());
+        manager.getEpicById(epicId);
         manager.getSubtaskById(subtask1.getId());
         printHistory(manager);
 
@@ -50,6 +49,49 @@ public class Main {
         System.out.println("\nПосле удаления задачи " + task1.getId() + ":");
         manager.deleteTaskById(task1.getId());
         printHistory(manager);
+    }
+
+    private static void testFileBackedTaskManager() {
+        System.out.println("\n*** Тестирование FileBackedTaskManager ***");
+
+        try {
+            // Создаем временный файл
+            File file = File.createTempFile("tasks", ".csv");
+            System.out.println("Используем временный файл: " + file.getAbsolutePath());
+
+            // Создаем и заполняем менеджер
+            FileBackedTaskManager manager = new FileBackedTaskManager(file);
+
+            // 1. Сначала создаем эпик и получаем его ID
+            Epic epic = new Epic("Epic", "Description");
+            int epicId = manager.createEpic(epic);
+            System.out.println("Создан эпик с ID: " + epicId);
+
+            // 2. Проверяем, что ID эпика валиден
+            if (epicId <= 0) {
+                throw new IllegalStateException("Неверный ID эпика: " + epicId);
+            }
+
+            // 3. Создаем подзадачу с корректным ID эпика
+            Subtask subtask = new Subtask(
+                    "Subtask",
+                    "Description",
+                    Status.NEW,
+                    epicId  // Используем полученный ID эпика
+            );
+            int subtaskId = manager.createSubtask(subtask);
+            System.out.println("Создана подзадача с ID: " + subtaskId);
+
+            // 4. Проверяем сохранение/загрузку
+            FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(file);
+            System.out.println("\nЗагруженные данные:");
+            printAllTasks(loadedManager);
+
+        } catch (IOException e) {
+            System.out.println("Ошибка при работе с файлом: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.out.println("Ошибка создания задач: " + e.getMessage());
+        }
     }
 
     private static void printHistory(TaskManager manager) {
@@ -63,55 +105,6 @@ public class Main {
             } else {
                 System.out.println("[Task] " + task);
             }
-        }
-    }
-
-    private static void testFileBackedTaskManager() {
-        System.out.println("\n*** Тестирование FileBackedTaskManager ***");
-
-        try {
-            // Создаем временный файл
-            File file = File.createTempFile("tasks", ".csv");
-            System.out.println("Используем временный файл: " + file.getAbsolutePath());
-
-            // Создаем и заполняем первый менеджер
-            FileBackedTaskManager manager1 = new FileBackedTaskManager(file);
-
-            Task task = new Task(1, "Task", "Description", Status.NEW);
-            manager1.createTask(task);
-
-            Epic epic = new Epic(1, "Epic", "Epic Description");
-            manager1.createEpic(epic);
-
-            Subtask subtask = new Subtask(2, "Subtask", "Subtask Description",
-                    Status.DONE, epic.getId());
-            manager1.createSubtask(subtask);
-
-            System.out.println("\nДанные до сохранения:");
-            printAllTasks(manager1);
-
-            // Создаем второй менеджер из файла
-            FileBackedTaskManager manager2 = FileBackedTaskManager.loadFromFile(file);
-
-            System.out.println("\nДанные после загрузки:");
-            printAllTasks(manager2);
-
-            // Сравниваем данные
-            System.out.println("\nРезультаты сравнения:");
-            compareManagers(manager1, manager2);
-
-        } catch (IOException e) {
-            System.out.println("Ошибка при работе с файлом: " + e.getMessage());
-        }
-    }
-
-    private static void printHistory(InMemoryTaskManager manager) {
-        List<Task> history = manager.getHistory();
-        if (history.isEmpty()) {
-            System.out.println("История просмотров пуста");
-        } else {
-            System.out.println("История просмотров:");
-            history.forEach(task -> System.out.println("  " + task));
         }
     }
 
