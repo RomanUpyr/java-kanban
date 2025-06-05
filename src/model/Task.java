@@ -1,5 +1,7 @@
 package model;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.Objects;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -7,9 +9,13 @@ import java.time.LocalDateTime;
 // Создаем базовый класс для задач
 public class Task {
     private static int counter = 0;
+    @Expose
     protected int id; // Уникальный идентификатор задачи
+    @Expose
     protected String name; // Название задачи
+    @Expose
     protected String description; // Описание задачи
+    @Expose
     protected Status status; // Текущий статус задачи
     protected Duration duration; // Продолжительность задачи в минутах
     protected LocalDateTime startTime; // Дата и время начала выполнения задачи
