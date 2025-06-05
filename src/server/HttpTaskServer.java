@@ -9,8 +9,6 @@ import manager.TaskManager;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 /**
  * HTTP-сервер для управления задачами.
@@ -20,7 +18,6 @@ public class HttpTaskServer {
     private static final int PORT = 8080; // Порт сервера
     private final HttpServer server; // Встроенный HTTP-сервер
     private final TaskManager taskManager; // Менеджер задач
-    private final Gson gson;
 
     /**
      * Конструктор сервера.
@@ -32,22 +29,14 @@ public class HttpTaskServer {
 
     public HttpTaskServer(TaskManager taskManager) throws IOException {
         this.taskManager = taskManager; // Инициализируем переданным менеджером
-        this.gson = createGson(); // Инициализируем Gson
         this.server = HttpServer.create(new InetSocketAddress(PORT), 0); // Создаём сервер
 
         // Регистрируем обработчики для каждого типа запросов
-        server.createContext("/tasks", new TasksHandler(taskManager, gson)); // Обычные задачи
-        server.createContext("/subtasks", new SubtasksHandler(taskManager, gson)); // Подзадачи
-        server.createContext("/epics", new EpicsHandler(taskManager, gson)); // Эпики
-        server.createContext("/history", new HistoryHandler(taskManager, gson)); // История
-        server.createContext("/prioritized", new PrioritizedHandler(taskManager, gson)); // Приоритетные задачи
-    }
-
-    private Gson createGson() {
-        return new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .registerTypeAdapter(Duration.class, new DurationAdapter())
-                .create();
+        server.createContext("/tasks", new TasksHandler(taskManager)); // Обычные задачи
+        server.createContext("/subtasks", new SubtasksHandler(taskManager)); // Подзадачи
+        server.createContext("/epics", new EpicsHandler(taskManager)); // Эпики
+        server.createContext("/history", new HistoryHandler(taskManager)); // История
+        server.createContext("/prioritized", new PrioritizedHandler(taskManager)); // Приоритетные задачи
     }
 
     /**

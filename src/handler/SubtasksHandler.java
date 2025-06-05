@@ -1,11 +1,11 @@
 package handler;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import manager.TaskManager;
 import model.Subtask;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Обработчик HTTP-запросов для подзадач (Subtask):
@@ -19,7 +19,7 @@ import java.io.IOException;
 public class SubtasksHandler extends BaseHttpHandler {
     private final TaskManager taskManager;
 
-    public SubtasksHandler(TaskManager taskManager, Gson gson) {
+    public SubtasksHandler(TaskManager taskManager) {
         this.taskManager = taskManager;
     }
 
@@ -57,7 +57,7 @@ public class SubtasksHandler extends BaseHttpHandler {
                     } else {
                         int subtaskId = taskManager.createSubtask(newSubtask);
                         System.out.println("Created subtask with id: " + subtaskId);
-                        sendCreated(exchange, "{\"id\":" + subtaskId + "}");
+                        sendCreated(exchange, GSON.toJson(Map.of("id", subtaskId)));
                     }
                     break;
                 case "DELETE":

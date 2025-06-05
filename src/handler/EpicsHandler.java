@@ -1,12 +1,11 @@
 package handler;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
 import manager.TaskManager;
 import model.Epic;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -19,11 +18,9 @@ import java.util.NoSuchElementException;
  */
 public class EpicsHandler extends BaseHttpHandler {
     private final TaskManager taskManager;
-    private final Gson gson;
 
-    public EpicsHandler(TaskManager taskManager, Gson gson) {
+    public EpicsHandler(TaskManager taskManager) {
         this.taskManager = taskManager;
-        this.gson = gson;
     }
 
     @Override
@@ -48,8 +45,6 @@ public class EpicsHandler extends BaseHttpHandler {
             }
         } catch (NumberFormatException e) {
             sendText(exchange, "Invalid ID format", 400); // Bad Request
-        } catch (JsonSyntaxException e) {
-            sendText(exchange, "Invalid JSON format", 400); // Bad Request
         } catch (NoSuchElementException e) {
             sendNotFound(exchange);
         } catch (IllegalArgumentException e) {
@@ -62,12 +57,12 @@ public class EpicsHandler extends BaseHttpHandler {
 
     private void handleGetRequest(HttpExchange exchange, String[] pathParts) throws IOException {
         if (pathParts.length == 2) { // GET /epics
-            sendSuccess(exchange, gson.toJson(taskManager.getAllEpics()));
+            sendSuccess(exchange, GSON.toJson(taskManager.getAllEpics()));
         } else if (pathParts.length == 3) { // GET /epics/{id}
             int id = Integer.parseInt(pathParts[2]);
             Epic epic = taskManager.getEpicById(id);
             if (epic != null) {
-                sendSuccess(exchange, gson.toJson(epic));
+                sendSuccess(exchange, GSON.toJson(epic));
             } else {
                 sendNotFound(exchange);
             }
@@ -99,10 +94,10 @@ public class EpicsHandler extends BaseHttpHandler {
         int epicId;
         if (epic.getId() == 0) { // Новая задача
             epicId = taskManager.createEpic(epic);
-            sendCreated(exchange, "{\"id\":" + epicId + "}");
+            sendCreated(exchange, GSON.toJson(Map.of("id", epicId)));
         } else { // Обновление существующей
             taskManager.updateEpic(epic);
-            sendSuccess(exchange, "{\"id\":" + epic.getId() + "}");
+            sendSuccess(exchange, GSON.toJson(Map.of("id", epic.getId())));
         }
     }
 

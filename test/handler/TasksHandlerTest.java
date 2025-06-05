@@ -1,29 +1,14 @@
 package handler;
 
-import manager.*;
+import server.HttpTaskServerTest;
 import org.junit.jupiter.api.*;
-import server.HttpTaskServer;
 
-import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class TasksHandlerTest {
-    private static HttpTaskServer server;
-
-    @BeforeAll
-    static void startServer() throws IOException {
-        TaskManager taskManager = Managers.getDefault();
-        server = new HttpTaskServer(taskManager);
-        server.start();
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    @AfterAll
-    static void stopServer() {
-        server.stop();
+class TasksHandlerTest extends HttpTaskServerTest {
+    @Test
+    void server_shouldStartAndStopCorrectly() {
+        assertNotNull(server);
+        assertNotNull(taskManager);
     }
 }

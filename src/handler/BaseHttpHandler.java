@@ -1,15 +1,13 @@
 package handler;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import server.GsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 /**
  * Базовый класс для всех HTTP-обработчиков.
@@ -17,11 +15,7 @@ import java.time.LocalDateTime;
  */
 
 public abstract class BaseHttpHandler implements HttpHandler {
-    // Gson для сериализации/десериализации JSON
-    protected static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(Duration.class, new DurationAdapter())
-            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-            .create();
+    protected static final Gson GSON = GsonUtils.getGson();
 
     // Стандартные HTTP-коды ответов
     protected static final int OK = 200; // Успешный запрос

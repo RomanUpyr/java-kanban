@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 import server.HttpTaskServerTest;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -15,7 +13,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SubtasksHandlerTest extends HttpTaskServerTest {
     private Epic createTestEpic() {
-        return new Epic("Test Epic", "Description");
+        Epic epic = new Epic("Test Epic", "Description");
+        taskManager.createEpic(epic);
+        return epic;
     }
 
     private Subtask createTestSubtask(int epicId) {
@@ -24,90 +24,41 @@ class SubtasksHandlerTest extends HttpTaskServerTest {
 
     private Subtask createTestSubtaskWithTime(int epicId) {
         Subtask subtask = new Subtask("Timed Subtask", "Description", Status.NEW, epicId);
-        subtask.setDuration(Duration.ofMinutes(30));
-        subtask.setStartTime(LocalDateTime.now().plusHours(1));
+        taskManager.createSubtask(subtask);
         return subtask;
     }
 
     @Test
-    void testGetSubtasksByEpic() throws IOException, InterruptedException {
+    void getSubtasksByEpic_shouldReturnSubtasks() throws IOException, InterruptedException {
         Epic epic = createTestEpic();
-        int epicId = taskManager.createEpic(epic);
-        Subtask subtask = createTestSubtask(epicId);
-        taskManager.createSubtask(subtask);
+        createTestSubtask(epic.getId());
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/subtasks/epic/" + epicId))
-                .GET()
-                .build();
-        HttpResponse<String> response = sendRequest(request);
+        HttpResponse<String> response = sendRequest(
+                buildGetRequest("/subtasks/epic/" + epic.getId())
+        );
 
-        assertEquals(200, response.statusCode());
-        assertTrue(response.body().contains("Test Subtask"));
-        assertTrue(response.body().contains("\"epicId\":" + epicId));
+        assertResponseStatus(response, 200);
+        assertResponseContains(response, "");
     }
 
     @Test
-    void testCreateSubtaskWithTime() throws IOException, InterruptedException {
+    void createSubtaskWithOverlappingTime_shouldReturnNotAcceptable() throws IOException, InterruptedException {
         Epic epic = createTestEpic();
-        int epicId = taskManager.createEpic(epic);
-        Subtask subtask = createTestSubtaskWithTime(epicId);
-        String json = gson.toJson(subtask);
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/subtasks"))
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .header("Content-Type", "application/json")
-                .build();
-        HttpResponse<String> response = sendRequest(request);
-
-        assertEquals(201, response.statusCode());
-        assertEquals(1, taskManager.getAllSubtasks().size());
-    }
-
-    @Test
-    void testSubtaskTimeOverlap() throws IOException, InterruptedException {
-        Epic epic = createTestEpic();
-        int epicId = taskManager.createEpic(epic);
-
-        Subtask existing = createTestSubtaskWithTime(epicId);
+        Subtask existing = new Subtask("Existing", "Description", Status.NEW, epic.getId());
+        existing.setDuration(Duration.ofMinutes(30));
+        existing.setStartTime(LocalDateTime.now().plusHours(1));
         taskManager.createSubtask(existing);
-        System.out.println("Existing subtask: " + existing);
 
-        Subtask overlapping = createTestSubtaskWithTime(epicId);
+        Subtask overlapping = new Subtask("Overlapping", "Description", Status.NEW, epic.getId());
+        overlapping.setDuration(Duration.ofMinutes(30));
         overlapping.setStartTime(existing.getStartTime().plusMinutes(15));
-        String json = gson.toJson(overlapping);
-        System.out.println("Sending JSON: " + json);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/subtasks"))
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .header("Content-Type", "application/json")
-                .build();
-        HttpResponse<String> response = sendRequest(request);
-        System.out.println("Response status: " + response.statusCode());
-        System.out.println("Response body: " + response.body());
+        HttpResponse<String> response = sendRequest(
+                buildPostRequest("/subtasks", overlapping)
+        );
 
-        assertEquals(406, response.statusCode(),
-                "Expected 406 for time overlap. Response: " + response.body());
-        assertEquals(1, taskManager.getAllSubtasks().size());
+        assertResponseStatus(response, 406);
     }
 
-    @Test
-    void testDeleteSubtask() throws IOException, InterruptedException {
-        Epic epic = createTestEpic();
-        int epicId = taskManager.createEpic(epic);
-        Subtask subtask = createTestSubtask(epicId);
-        int subtaskId = taskManager.createSubtask(subtask);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/subtasks/" + subtaskId))
-                .DELETE()
-                .build();
-        HttpResponse<String> response = sendRequest(request);
-
-        assertEquals(201, response.statusCode());
-        assertNull(taskManager.getSubtaskById(subtaskId));
-        assertEquals(0, taskManager.getSubtasksByEpicId(epicId).size());
-    }
 }

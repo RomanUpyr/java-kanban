@@ -1,6 +1,5 @@
 package handler;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import manager.ManagerSaveException;
 import manager.TaskManager;
@@ -21,12 +20,10 @@ import java.util.Map;
  * - DELETE /tasks/{id} — удалить задачу по ID
  */
 public class TasksHandler extends BaseHttpHandler {
-    private final Gson gson;
     private final TaskManager taskManager;
 
-    public TasksHandler(TaskManager taskManager, Gson gson) {
+    public TasksHandler(TaskManager taskManager) {
         this.taskManager = taskManager;
-        this.gson = gson;
     }
 
     @Override
@@ -64,13 +61,13 @@ public class TasksHandler extends BaseHttpHandler {
 
         if (pathParts.length == 2) { // GET /tasks
             Collection<Task> tasks = taskManager.getAllTasks();
-            sendSuccess(exchange, gson.toJson(tasks));
+            sendSuccess(exchange, GSON.toJson(tasks));
         } else if (pathParts.length == 3) { // GET /tasks/{id}
             try {
                 int id = Integer.parseInt(pathParts[2]);
                 Task task = taskManager.getTaskById(id);
                 if (task != null) {
-                    sendSuccess(exchange, gson.toJson(task));
+                    sendSuccess(exchange, GSON.toJson(task));
                 } else {
                     sendNotFound(exchange);
                 }
@@ -84,11 +81,11 @@ public class TasksHandler extends BaseHttpHandler {
 
     private void handlePost(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes());
-        Task task = gson.fromJson(body, Task.class);
+        Task task = GSON.fromJson(body, Task.class);
         task.setId(0); // Сбрасываем ID для новой задачи
 
         int taskId = taskManager.createTask(task);
-        sendText(exchange, gson.toJson(Map.of("id", taskId)), 201);
+        sendText(exchange, GSON.toJson(Map.of("id", taskId)), 201);
     }
 
     private void handleDelete(HttpExchange exchange) throws IOException {
